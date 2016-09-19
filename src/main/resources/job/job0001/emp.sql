@@ -1,0 +1,11 @@
+select
+  EMPLOYEE_ID
+  , PHONE_NUMBER
+  , FIRST_NAME
+  , LAST_NAME
+  , EMAIL 
+  , SYSDATE
+from
+  EMPLOYEES
+
+

@@ -1,0 +1,58 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:batch="http://www.springframework.org/schema/batch"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/batch
+            http://www.springframework.org/schema/batch/spring-batch.xsd
+            http://www.springframework.org/schema/beans 
+            http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="jobRepository"
+        class="org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean">
+        <property name="transactionManager" ref="transactionManager" />
+    </bean>
+
+    <bean id="transactionManager"
+        class="org.springframework.batch.support.transaction.ResourcelessTransactionManager" />
+
+    <bean id="jobLauncher"
+        class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
+        <property name="jobRepository" ref="jobRepository" />
+    </bean>
+
+    <bean id="sql" class="java.lang.String">
+    <constructor-arg>
+        <bean class="org.springframework.util.FileCopyUtils" factory-method="copyToByteArray">
+            <constructor-arg value="classpath:${sqlfilepath}" type="java.io.InputStream" />
+        </bean>     
+    </constructor-arg>
+    </bean>
+<!-- #{ getBeanFactory().containsBean('customCar') ? getBeanFactory().getBean('customCar') : defaultCar } -->
+    <bean id="jdbcCursorItemReader" class="org.springframework.batch.item.database.JdbcCursorItemReader" scope="step">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="rowMapper" >
+            <bean class="org.springframework.jdbc.core.ColumnMapRowMapper"/>
+        </property>
+        <property name="preparedStatementSetter" >
+            <bean class="org.springframework.batch.core.resource.ListPreparedStatementSetter">
+                <property name="parameters" value="#{ getBeanFactory().containsBean('preparedStatementParameters') ? getBeanFactory().getBean('preparedStatementParameters') : new java.util.ArrayList() }">
+                </property>
+            </bean>
+        </property>
+        <property name="sql" ref="sql"/>
+    </bean>
+    
+    <bean id="csvResource" class="org.springframework.core.io.FileSystemResource">
+        <constructor-arg>
+            <value>${outputCsvFilePath}</value>
+        </constructor-arg>
+    </bean>
+    
+    <bean id="flatFileItemWriter" class="org.springframework.batch.item.file.FlatFileItemWriter">
+        <property name="resource" ref="csvResource"/>
+        <property name="lineAggregator">
+            <bean class="org.springframework.batch.item.file.transform.DelimitedLineAggregator">
+            </bean> 
+        </property>
+    </bean>
+
+</beans>
